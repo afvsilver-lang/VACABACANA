@@ -1,0 +1,46 @@
+# Blueprint de Render (plan free).
+#
+# Importante sobre el plan free:
+#  - Los servicios se duermen tras ~15 min sin trafico; el primer acceso
+#    despues de dormir tarda cerca de un minuto en responder.
+#  - El disco es efimero: la base SQLite se reinicia en cada despliegue y el
+#    backend vuelve a sembrar los datos de ejemplo al arrancar. Para conservar
+#    datos reales hace falta un disco persistente (de pago) o Postgres.
+#
+# Los nombres de los servicios definen las URLs, y esas URLs estan referenciadas
+# en CORS_ORIGINS y VITE_API_URL: si cambia un nombre, hay que actualizar ambas.
+
+services:
+  - type: web
+    name: olinda-backend
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: backend
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://olinda-frontend.onrender.com
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: andres
+      # sync: false -> Render pide el valor en el panel y no queda en el repo.
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+
+  - type: web
+    name: olinda-frontend
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: FRONTEND
+    dockerfilePath: ./Dockerfile.render
+    envVars:
+      - key: VITE_API_URL
+        value: https://olinda-backend.onrender.com
